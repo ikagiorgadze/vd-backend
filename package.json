@@ -11,6 +11,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/cors": "^2.8.19",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "duckdb": "^1.3.2",
     "express": "^5.1.0"
