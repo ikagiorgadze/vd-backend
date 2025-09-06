@@ -1,0 +1,17 @@
+[Unit]
+Description=VD Backend (Node.js + DuckDB)
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/opt/vd-backend
+Environment=NODE_ENV=production
+EnvironmentFile=-/opt/vd-backend/.env
+ExecStart=/usr/bin/node /opt/vd-backend/dist/index.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/vd-backend.log
+StandardError=append:/var/log/vd-backend.err
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,77 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: vd-backend-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Copy systemd unit to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          source: "deploy/vd-backend.service"
+          target: "/tmp/"
+
+      - name: Deploy over SSH and restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_SSH_PORT }}
+          script: |
+            set -euo pipefail
+
+            REPO_DIR="/opt/vd-backend"
+            SERVICE_NAME="vd-backend.service"
+
+            # Ensure prerequisites
+            if ! command -v git >/dev/null 2>&1; then
+              sudo apt-get update -y
+              sudo apt-get install -y git
+            fi
+            if ! command -v node >/dev/null 2>&1; then
+              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+
+            # Clone or update repository
+            sudo mkdir -p "$REPO_DIR"
+            sudo chown -R "$USER":"$USER" "$REPO_DIR"
+            if [ ! -d "$REPO_DIR/.git" ]; then
+              git clone --depth 1 "https://github.com/${{ github.repository }}.git" "$REPO_DIR"
+            fi
+            cd "$REPO_DIR"
+            git fetch --all --prune
+            git reset --hard origin/main
+
+            # Install deps, build, and keep prod footprint
+            npm ci
+            npm run build
+
+            # Install/refresh systemd unit
+            sudo mv /tmp/deploy/vd-backend.service "/etc/systemd/system/${SERVICE_NAME}"
+            sudo systemctl daemon-reload
+            sudo systemctl enable "$SERVICE_NAME"
+
+            # Create a minimal .env if one doesn't exist yet
+            if [ ! -f .env ]; then
+              printf '%s\n' \
+                'PORT=3000' \
+                'CORS_ORIGIN=' \
+                > .env
+            fi
+
+            # Restart service
+            sudo systemctl restart "$SERVICE_NAME"
+            sudo systemctl status --no-pager "$SERVICE_NAME" | tail -n +1 || true
+
