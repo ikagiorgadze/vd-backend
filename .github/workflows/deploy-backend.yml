@@ -11,6 +11,9 @@ jobs:
       group: vd-backend-deploy
       cancel-in-progress: false
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Copy systemd unit to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
