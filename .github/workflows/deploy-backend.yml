@@ -38,11 +38,14 @@ jobs:
             SERVICE_NAME="vd-backend.service"
 
             # Ensure prerequisites
+            # Ensure package index is fresh for any installs
+            sudo apt-get update -y
+
             if ! command -v git >/dev/null 2>&1; then
-              sudo apt-get update -y
               sudo apt-get install -y git
             fi
-            if ! command -v node >/dev/null 2>&1; then
+            # Install Node.js 20 if npm is missing (covers cases where node exists without npm)
+            if ! command -v npm >/dev/null 2>&1; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
               sudo apt-get install -y nodejs
             fi
