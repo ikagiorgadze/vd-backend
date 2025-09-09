@@ -1,6 +1,7 @@
 import express, { Application } from 'express';
 import cors, { CorsOptions } from 'cors';
-import dataRouter from './routes/data.routes';
+import vdemRouter from './routes/vdem.routes';
+import imfRouter from './routes/imf.routes';
 
 const app: Application = express();
 
@@ -22,7 +23,11 @@ app.use(cors(corsOptions));
 // Middleware: parse JSON request bodies
 app.use(express.json());
 
-// Register routes (all ERT API routes are defined in dataRouter)
-app.use('/', dataRouter);
+// Health lives at root, domain-specific APIs under /v-dem and /imf
+app.use('/v-dem', vdemRouter);
+app.use('/imf', imfRouter);
+
+// Root health (mirrors /v-dem/health & /imf/health if needed later)
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
 export default app;
