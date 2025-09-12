@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getHealth, queryVdemDataController } from '../controllers/vdem.controller';
+import { getHealth, queryVdemDataController, explainVdemRelationshipsController } from '../controllers/vdem.controller';
 
 const router = Router();
 
@@ -8,5 +8,8 @@ router.get('/health', getHealth);
 
 // Query route (POST /query) for data queries
 router.post('/query', queryVdemDataController);
+
+// Explain relationships route (POST /analysis/relationships/explain)
+router.post('/analysis/relationships/explain', explainVdemRelationshipsController);
 
 export default router;
