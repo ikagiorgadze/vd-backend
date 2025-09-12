@@ -1,4 +1,9 @@
-export type IndexMeta = { index_code: string; name: string; question: string; definition: string };
+export type IndexMeta = {
+  index_code: string;
+  name: string;
+  question: string;
+  definition: string;
+};
 
 export type ExplainRequest = {
   indexA: string;
@@ -21,7 +26,12 @@ export type ExplainResponse = {
     indexA: IndexMeta;
     indexB: IndexMeta;
     country: string;
-    correlation: { r: number; n?: number; method?: string; yearsCovered?: [number, number] } | null;
+    correlation: {
+      r: number;
+      n?: number;
+      method?: string;
+      yearsCovered?: [number, number];
+    } | null;
   };
   model: string;
   explanation?: string;

@@ -23,9 +23,9 @@ function loadCountryMap(): Record<string, string> {
   if (countryMapCache) return countryMapCache;
   // Try dist then src for the JSON file
   const possiblePaths = [
-    path.resolve(__dirname, '../series-code-countries.json'), // when built to dist
-    path.resolve(__dirname, '../../src/series-code-countries.json'), // when running with ts-node/tsx
-    path.resolve(process.cwd(), 'src/series-code-countries.json')
+    path.resolve(__dirname, '../data/definitions/imf/series-code-countries.json'), // when built to dist
+    path.resolve(__dirname, '../../src/data/definitions/imf/series-code-countries.json'), // when running with ts-node/tsx
+    path.resolve(process.cwd(), 'src/data/definitions/imf/series-code-countries.json')
   ];
   for (const p of possiblePaths) {
     try {

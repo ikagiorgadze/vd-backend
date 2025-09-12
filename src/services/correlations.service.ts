@@ -1,8 +1,8 @@
 import duckdb from 'duckdb';
 import path from 'path';
-import { Correlation } from '../types/vdem';
+import { Correlation } from '../types/explain';
 
-const CORRELATIONS_PARQUET_PATH = process.env.CORRELATIONS_PARQUET_PATH || path.resolve(process.cwd(), 'data/correlations.parquet');
+const CORRELATIONS_PARQUET_PATH = path.resolve(process.cwd(), 'data/correlations.parquet');
 
 let db: duckdb.Database | null = null;
 
@@ -38,14 +38,9 @@ export async function getCorrelation(params: {
       AND lower(country_name) = '${c}'
   `;
 
-  // DEBUG: log SQL (trimmed) and parquet path
-  console.log('[DEBUG][correlations] parquet:', parquet);
-  console.log('[DEBUG][correlations] sql:', sql.replace(/\s+/g, ' ').trim());
-
   const rows: any[] = await new Promise((resolve, reject) => {
     database.all(sql, (err, res) => err ? reject(err) : resolve(res));
   });
-  console.log('[DEBUG][correlations] rows fetched:', rows.length);
   if (!rows.length) return null;
 
   // Rank candidates: highest n, then largest |r|, then smallest p_value

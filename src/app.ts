@@ -5,7 +5,9 @@ import imfRouter from './routes/imf.routes';
 
 const app: Application = express();
 
-// CORS configuration (allow from env-specified origins or all in dev)
+// TODO - Add Helmet for security headers
+
+// TODO - CORS configuration (allow from env-specified origins or all in dev)
 const corsOriginEnv = process.env.CORS_ORIGIN;
 const corsOrigin: CorsOptions['origin'] = corsOriginEnv
 	? corsOriginEnv.split(',').map((s) => s.trim())

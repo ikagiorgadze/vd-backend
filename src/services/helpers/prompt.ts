@@ -1,4 +1,4 @@
-import { Correlation, IndexMeta } from '../types/vdem';
+import { Correlation, IndexMeta } from '../../types/explain';
 
 export function buildExplainPrompt(args: {
   metaA: IndexMeta; metaB: IndexMeta; country: string;
@@ -38,7 +38,7 @@ Style and tone:
 - Keep it focused on what this means in ${country} rather than on statistical details.
 
 Structure (approx. 140–220 words):
-- Summary (2–3 sentences): say whether the two indices tend to move together and what that generally implies.
+- Summary (3-5 sentences): say whether the two indices (refer to them by their names, ${metaA.name} and ${metaB.name}) tend to move together and what that generally implies.
 - Why it matters (2–3 short bullets): practical or real-world implications in ${country}.
 - Drivers/Context (2–3 short bullets): plausible reasons these move together, grounded in the provided index descriptions.
 - Caveats (1–2 short bullets): avoid causal claims; mention limits of the data or missing definitions if relevant.
