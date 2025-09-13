@@ -1,5 +1,7 @@
 import duckdb from "duckdb";
 import path from "path";
+import fs from 'fs';
+import { AppError } from '../utils/error';
 
 interface Row {
   country_name: string;
@@ -8,9 +10,14 @@ interface Row {
 }
 
 const db = new duckdb.Database(":memory:"); // In-memory DuckDB
-const parquetPath =
-  process.env.PARQUET_PATH ||
-  path.resolve(__dirname, "../../data/data_full.parquet");
+
+// Resolve parquet/data path from environment first. Prefer a VDEM-specific
+// env var, fall back to PARQUET_PATH for compatibility, then to the
+// repository data path. Use process.cwd() so the path is stable at runtime.
+const VDEM_DATA_PATH = process.env.VDEM_DATA_PATH || process.env.PARQUET_PATH;
+const parquetPath = VDEM_DATA_PATH
+  ? path.resolve(process.cwd(), VDEM_DATA_PATH)
+  : path.resolve(process.cwd(), 'data', 'parquets', 'vdem_data.parquet');
 
 export const queryVdemData = async (
   countries: string[],
@@ -18,6 +25,13 @@ export const queryVdemData = async (
   startYear?: number,
   endYear?: number
 ): Promise<Row[]> => {
+  // Fail fast with a clear message if the parquet path doesn't exist.
+  if (!fs.existsSync(parquetPath)) {
+    throw new AppError(
+      `Parquet file not found at ${parquetPath}. Ensure the file exists or set VDEM_DATA_PATH/PARQUET_PATH to the correct location.`,
+      500
+    );
+  }
   const start = Number.isFinite(startYear) ? (startYear as number) : 2000; // Change default start year from here
   const end = Number.isFinite(endYear) ? (endYear as number) : start + 5; // Change default end year from here (extract to env later)
 

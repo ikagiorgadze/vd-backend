@@ -25,13 +25,19 @@ function loadCountryMap(): Record<string, string> {
   const possiblePaths = [
     path.resolve(__dirname, '../data/definitions/imf/series-code-countries.json'), // when built to dist
     path.resolve(__dirname, '../../src/data/definitions/imf/series-code-countries.json'), // when running with ts-node/tsx
-    path.resolve(process.cwd(), 'src/data/definitions/imf/series-code-countries.json')
+  path.resolve(process.cwd(), 'src/data/definitions/imf/series-code-countries.json'),
+  path.resolve(process.cwd(), 'data/definitions/imf/series-code-countries.json')
   ];
   for (const p of possiblePaths) {
     try {
       if (fs.existsSync(p)) {
         const raw = fs.readFileSync(p, 'utf-8');
-        countryMapCache = JSON.parse(raw);
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        // Normalize: trim names
+        countryMapCache = {};
+        for (const [k, v] of Object.entries(parsed)) {
+          countryMapCache[k] = typeof v === 'string' ? v.trim() : String(v);
+        }
         return countryMapCache!;
       }
     } catch {/* continue */}
