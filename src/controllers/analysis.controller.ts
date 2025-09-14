@@ -4,6 +4,21 @@ import { getIndexMetaUniversal } from '../services/metadata-universal.service';
 import { getCorrelation } from '../services/correlations.service';
 import { buildExplainPrompt } from '../services/helpers/prompt';
 import { getOpenAIClient } from '../services/openai.service';
+import { TTLCache } from '../utils/ttlCache';
+
+// In-memory cache for explanations
+const explainCache = new TTLCache<string>(500, +(process.env.EXPLAIN_CACHE_TTL_MS || 6 * 60 * 60 * 1000));
+
+function makeKey(parts: any): string {
+  const json = JSON.stringify(parts);
+  // Simple hash to keep key length small
+  let h = 0;
+  for (let i = 0; i < json.length; i++) {
+    h = (h << 5) - h + json.charCodeAt(i);
+    h |= 0;
+  }
+  return String(h);
+}
 
 export const explainRelationshipsController = async (
   req: Request,
@@ -47,6 +62,22 @@ export const explainRelationshipsController = async (
     let explanation: string | undefined;
     const model = process.env.OPENAI_MODEL || 'gpt-4o';
     if (execute) {
+      const key = makeKey({
+        a: safeMetaA.index_code,
+        b: safeMetaB.index_code,
+        country,
+        r: correlation.r,
+        n: correlation.n,
+        m: correlation.method,
+        years: (correlation as any).yearsCovered || [correlation.start_year, correlation.end_year],
+        model,
+        prompt,
+      });
+
+      const cached = explainCache.get(key);
+      if (cached) {
+        return res.json({ explanation: cached, cached: true });
+      }
       const client = getOpenAIClient();
       const completion = await client.chat.completions.create({
         model,
@@ -55,7 +86,8 @@ export const explainRelationshipsController = async (
         max_tokens: 800,
       });
       explanation = completion.choices?.[0]?.message?.content || '';
-      return res.json({ explanation });
+      if (explanation) explainCache.set(key, explanation);
+      return res.json({ explanation, cached: false });
     }
 
     return res.json({

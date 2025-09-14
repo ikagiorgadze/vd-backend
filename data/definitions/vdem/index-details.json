@@ -3604,5 +3604,11 @@
     "name": "Number of successful coup attempts in a year",
     "question": "How many successful coup d’etat where recoreded in this year?",
     "definition": "According to the source, how many successful coup attempts where recorded in this year? The maximum count of this derived variable is four and its minimum is zero. Coups d’etat are defined as “overt attempts by the military or other elites within the state apparatus to unseat the sitting head of state using unconstitutional means (. . . ) there is no minimal death threshold for defining a coup. A coup attempt is defined as successful if the coup perpetrators seize and hold power for at least seven days” (Powell & Thyne 2011:252)."
+  },
+  {
+    "index_code": "v2lgstafflo",
+    "name": "Lower chamber members serve in government",
+    "question": "In practice, are members of the lower (or unicameral) chamber of the legislature able to serve simultaneously as ministers in the government?",
+    "definition": "Defines whether members of the lower (or unicameral) chamber of the legislature are able to serve simultaneously as ministers in the government. This is a de facto measure, so it captures whether members of the lower chamber actually do serve in government, not whether they are legally allowed to do so. In parliamentary systems, it is common for members of the legislature to serve in the government, while in presidential systems this is often prohibited. In some countries, members of the legislature can serve in government only if they resign their seat in the legislature. This question concerns only members of the lower (or unicameral) chamber of the legislature; members of the upper chamber are not considered."
   }
 ]

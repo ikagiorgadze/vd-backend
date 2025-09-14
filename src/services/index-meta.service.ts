@@ -6,8 +6,8 @@ const RESPONSE_JSON_PATH = path.resolve(process.cwd(), 'data/definitions/vdem/in
 
 let cachedIndexMap: Map<string, IndexMeta> | null = null;
 
-export async function loadIndexMeta(filePath: string = RESPONSE_JSON_PATH): Promise<Map<string, IndexMeta>> {
-  if (cachedIndexMap) {
+export async function loadIndexMeta(filePath: string = RESPONSE_JSON_PATH, forceReload: boolean = false): Promise<Map<string, IndexMeta>> {
+  if (cachedIndexMap && !forceReload) {
     return cachedIndexMap;
   }
 
@@ -29,7 +29,13 @@ export async function loadIndexMeta(filePath: string = RESPONSE_JSON_PATH): Prom
 }
 
 export async function getIndexMetaSafe(code: string): Promise<IndexMeta | null> {
-  const map = await loadIndexMeta();
   const key = code.trim().toLowerCase();
-  return map.get(key) ?? null;
+  let map = await loadIndexMeta(RESPONSE_JSON_PATH);
+  let found = map.get(key) ?? null;
+  // In dev, if not found, try reloading to pick up JSON changes without restart
+  if (!found && process.env.NODE_ENV !== 'production') {
+    map = await loadIndexMeta(RESPONSE_JSON_PATH, true);
+    found = map.get(key) ?? null;
+  }
+  return found;
 }

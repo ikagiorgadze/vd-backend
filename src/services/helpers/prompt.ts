@@ -31,10 +31,8 @@ export function buildExplainPrompt(args: {
   // entries when available; leave question blank for IMF/WEO/NEA.
   const humanMeta = `
 Index A: ${metaA.name}
-- What it captures: ${metaA.definition || 'Definition not available.'}
 
 Index B: ${metaB.name}
-- What it captures: ${metaB.definition || 'Definition not available.'}
 `;
 
   // Internal reference: codes are provided but explicitly labeled as internal
@@ -45,30 +43,34 @@ A = ${metaA.index_code}
 B = ${metaB.index_code}
 `;
 
-  const instructions = `
-Write a short, professional explanation for a general audience.
+  const instructions = `Write a short, professional explanation for a general audience.
+
+MANDATORY OUTPUT FORMAT:
+- The response MUST contain the following four headers (exact spelling and capitalization):
+  Summary
+  Why it matters
+  Drivers/Context
+  Caveats
+
+Each header must be followed by the content described below. Do not add any other top-level header. The headers become the primary structure of the answer; put the shortest possible summary under each.
 
 Style and tone:
 - Use professional language and tone. Prefer technical terms over everyday words.
-- Refer to the indices by their names (not codes) and briefly describe what they capture.
-- Never mention internal identifiers or code strings (for example "v2x_polyarchy" or "NGDP.RPCH"). Use names and plain language only.
+- Refer to the indices only by their human-friendly names (not codes).
+- Never mention internal identifiers, code strings, file names, or dataset labels (for example "v2x_polyarchy", "v2lgstafflo", or "NGDP.RPCH").
 - Keep it focused on what this means in ${country} rather than on statistical details.
 
-Structure (approx. 140–220 words):
-- Summary (3-5 sentences): say whether the two indices (refer to them by their names, ${
-    metaA.name
-  } and ${metaB.name}) tend to move together and what that generally implies.
-- Why it matters (2–3 short bullets): practical or real-world implications in ${country}.
-- Drivers/Context (2–3 short bullets): plausible reasons these move together, grounded in the provided index descriptions. Quote ${
-    correlation!.r
-  } (Pearson's r) and briefly describe how it describes the correlation, while disregarding other numbers.
-- Caveats (1–2 short bullets): avoid causal claims; mention limits of the data if relevant; under no circumstances should missing definitions be acknowledged.
+Structure (approx. 140–220 words total):
+- Summary (3-5 sentences): say whether the two indices (refer to them by their names, ${metaA.name} and ${metaB.name}) tend to move together and what that generally implies.
+- Why it matters (2-3 short bullets): practical or real-world implications in ${country}.
+- Drivers/Context (2-3 short bullets): plausible reasons these move together, grounded in the provided index descriptions. Quote ${correlation!.r} (Pearson's r) and briefly describe how it describes the correlation.
+- Caveats (1-2 short bullets): avoid causal claims; mention limits of the data if relevant; under no circumstances should missing definitions be acknowledged.
 
 Rules:
-- Do not include index codes or internal identifiers in the explanation.
-- Do not list formulas or parenthetical statistics.
+- Do not include index codes or internal identifiers anywhere in the explanation.
+- Do not list formulas or parenthetical statistics beyond the single quoted Pearson r in Drivers/Context.
 - If metadata is present, do not fabricate facts beyond the provided context.
-- If metadata is missing, do not acknowledge the gap at all and refer to trustworthy sources of information (e.g., academic papers, official reports, established and respected sources).
+- If metadata is missing, do not acknowledge the gap; instead give cautious, general language grounded in plausible external sources.
 `;
 
   const context = `Context:\n- ${rLine}\n- Years: ${yr}`;
