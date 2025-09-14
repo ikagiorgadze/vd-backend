@@ -22,7 +22,6 @@ export async function getCorrelation(params: {
   country: string;
 }): Promise<(Correlation & { yearsCovered?: [number, number] }) | null> {
   const { indexA, indexB, country } = params;
-  console.debug('[getCorrelation] inputs:', { indexA, indexB, country });
   const stripDataset = (s: string) => {
     const raw = String(s ?? '').trim();
     const i = raw.indexOf(':');
@@ -31,7 +30,6 @@ export async function getCorrelation(params: {
 
   const codeA = stripDataset(indexA);
   const codeB = stripDataset(indexB);
-  console.debug('[getCorrelation] normalized codes:', { codeA, codeB });
 
   // Lowercase and escape literals for safe comparison with lower(...) columns
   const escapeSqlLiteral = (s: string) => s.replace(/'/g, "''");
@@ -45,8 +43,6 @@ export async function getCorrelation(params: {
     `country_name=${countryTrim}`,
     `country_name-${countryTrim}`,
   ];
-  console.debug('[getCorrelation] CORRELATIONS_DIR:', CORRELATIONS_DIR);
-  console.debug('[getCorrelation] country candidates:', candNames);
   let countryDir: string | null = null;
   let matchedVariant: string | null = null;
   // First try exact path variants (fast path)
@@ -83,22 +79,18 @@ export async function getCorrelation(params: {
       // ignore
     }
   }
-  console.debug('[getCorrelation] matched countryDir:', countryDir, 'variant:', matchedVariant);
   if (!countryDir) return null;
   // Ensure the country parquet folder and part files exist. If not, return
   // null so callers can respond with 404 (missing data for that country).
   let entries: string[];
   entries = await fs.readdir(countryDir);
-  console.debug('[getCorrelation] countryDir entries count:', entries.length);
   const hasParts = entries.some(
     (n) => n.startsWith('part-') && n.endsWith('.parquet')
   );
-  console.debug('[getCorrelation] hasParts:', hasParts);
   if (!hasParts) return null;
 
   // Use DuckDB to read with glob pattern across the part files.
   const partGlob = path.join(countryDir, 'part-*.parquet');
-  console.debug('[getCorrelation] partGlob:', partGlob);
   const database = getDb();
   const parquet = partGlob;
 
@@ -136,9 +128,6 @@ export async function getCorrelation(params: {
   const rows: any[] = await new Promise((resolve, reject) => {
     database.all(sql, (err, res) => (err ? reject(err) : resolve(res)));
   });
-  console.debug('[getCorrelation] sql (truncated):', sql.slice(0, 400));
-  console.debug('[getCorrelation] rows.length:', rows.length);
-  if (rows.length) console.debug('[getCorrelation] first row sample:', rows[0]);
   if (!rows.length) return null;
 
   // Rank candidates: highest n, then largest |r|, then smallest p_value
