@@ -70,8 +70,8 @@ jobs:
             sudo systemctl enable "$SERVICE_NAME"
 
             # >>> Write secure env for systemd (pulls secret from GitHub Actions)
-            sudo install -m 600 -o root -g root /dev/null /etc/vd-backend.env
-            sudo bash -lc 'cat > /etc/vd-backend.env <<EOF
+            sudo install -m 600 -o root -g root /dev/null /etc/vd-backend/.env
+            sudo bash -lc 'cat > /etc/vd-backend/.env <<EOF
             NODE_ENV=production
             HOST=127.0.0.1
             PORT=3000
