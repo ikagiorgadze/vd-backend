@@ -22,12 +22,14 @@ GitHub Secrets required (in vd-backend repo)
 - EC2_SSH_KEY: contents of private key (PEM) with access to the instance
 
 CI/CD behavior
-- On push to main, GitHub Action connects via SSH to the EC2 host, clones/updates /opt/vd-backend, runs npm ci && npm run build, writes a default .env if missing, and restarts systemd service.
+- On push to main, GitHub Action connects via SSH to the EC2 host, clones/updates /opt/vd-backend, runs npm ci && npm run build, writes a secure env file at /etc/vd-backend.env, and restarts the systemd service.
 
-Environment (.env)
-- PORT=3000
-- CORS_ORIGIN should be empty if API is only accessed via same-origin through Nginx
-- PARQUET_PATH can be empty to use default embedded path
+Environment (systemd environment file)
+- Location: /etc/vd-backend.env (root-owned 600)
+- Example values:
+   - PORT=3000
+   - CORS_ORIGIN=https://democracy-dashboard.com
+   - OPENAI_API_KEY=... (set via GitHub Secret in workflow)
 
 Logs
 - /var/log/vd-backend.log and /var/log/vd-backend.err

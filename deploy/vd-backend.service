@@ -6,7 +6,7 @@ After=network.target
 User=ubuntu
 WorkingDirectory=/opt/vd-backend
 Environment=NODE_ENV=production
-EnvironmentFile=/opt/vd-backend/.env
+EnvironmentFile=/etc/vd-backend.env
 ExecStart=/usr/bin/node /opt/vd-backend/dist/index.js
 Restart=always
 RestartSec=5
