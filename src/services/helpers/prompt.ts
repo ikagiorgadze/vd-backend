@@ -49,7 +49,6 @@ B = ${metaB.index_code}
 
 MANDATORY OUTPUT FORMAT:
 - The response MUST contain the following six headers (exact spelling and capitalization):
-\`\`\`
 Summary
 Why it matters
 Statistical reliability
