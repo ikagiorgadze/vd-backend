@@ -46,7 +46,7 @@ export type CorrelationsRequest = {
   dataset1: 'VDEM' | 'WEO' | 'NEA';
   dataset2: 'VDEM' | 'WEO' | 'NEA';
   minObservations?: number;
-  limit?: number;
+  limit?: number; // Ignored - always returns 3 pairs
 };
 
 export type CorrelationsResponse = {

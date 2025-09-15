@@ -127,7 +127,7 @@ export const getCorrelationsController = async (
     }
 
     const minObs = minObservations ? parseInt(String(minObservations), 10) : undefined;
-    const lim = limit ? parseInt(String(limit), 10) : 3;
+    const lim = 3; // Always return exactly 3 correlation pairs
 
     const correlations = await getTopCorrelations(country, type, dataset1, dataset2, minObs, lim);
 
