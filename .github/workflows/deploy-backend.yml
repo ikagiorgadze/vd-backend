@@ -69,13 +69,15 @@ jobs:
             sudo systemctl daemon-reload
             sudo systemctl enable "$SERVICE_NAME"
 
-            # Create a minimal .env if one doesn't exist yet
-            if [ ! -f .env ]; then
-              printf '%s\n' \
-                'PORT=3000' \
-                'CORS_ORIGIN=' \
-                > .env
-            fi
+            # >>> Write secure env for systemd (pulls secret from GitHub Actions)
+            sudo install -m 600 -o root -g root /dev/null /etc/vd-backend.env
+            sudo bash -lc 'cat > /etc/vd-backend.env <<EOF
+            NODE_ENV=production
+            HOST=127.0.0.1
+            PORT=3000
+            CORS_ORIGIN=https://democracy-dashboard.com
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            EOF'
 
             # Restart service
             sudo systemctl restart "$SERVICE_NAME"
