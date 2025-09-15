@@ -5,9 +5,20 @@ export type IndexMeta = {
   definition: string;
 };
 
+export type IndexData  = {
+  year: number;
+  observation: number;
+}
+
+export type Index = {
+  name: string;
+  data: IndexData[];
+}
+
 export type ExplainRequest = {
-  indexA: string;
-  indexB: string;
+  
+  indexA: Index;
+  indexB: Index;
   country: string;
   execute?: boolean;
 };

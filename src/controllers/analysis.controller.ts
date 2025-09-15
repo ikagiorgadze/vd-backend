@@ -28,11 +28,11 @@ export const explainRelationshipsController = async (
     const { indexA, indexB, country, execute } = req.body as ExplainRequest;
 
     const [metaA, metaB] = await Promise.all([
-      getIndexMetaUniversal(indexA),
-      getIndexMetaUniversal(indexB),
+      getIndexMetaUniversal(indexA.name),
+      getIndexMetaUniversal(indexB.name),
     ]);
 
-    const correlation = await getCorrelation({ indexA, indexB, country });
+    const correlation = await getCorrelation(indexA.name, indexB.name, country );
     if (!correlation) {
       return res
         .status(404)
@@ -40,14 +40,14 @@ export const explainRelationshipsController = async (
     }
 
     const safeMetaA = metaA ?? {
-      index_code: indexA,
-      name: indexA,
+      index_code: indexA.name,
+      name: indexA.name,
       question: '',
       definition: '',
     };
     const safeMetaB = metaB ?? {
-      index_code: indexB,
-      name: indexB,
+      index_code: indexB.name,
+      name: indexB.name,
       question: '',
       definition: '',
     };
@@ -60,7 +60,7 @@ export const explainRelationshipsController = async (
     });
 
     let explanation: string | undefined;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const model = process.env.OPENAI_MODEL || 'gpt-4.1';
     if (execute) {
       const key = makeKey({
         a: safeMetaA.index_code,

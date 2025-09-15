@@ -1,12 +1,13 @@
-import { Correlation, IndexMeta } from '../../types/explain';
+import { Correlation, IndexData, IndexMeta } from '../../types/explain';
 
 export function buildExplainPrompt(args: {
   metaA: IndexMeta;
   metaB: IndexMeta;
   country: string;
   correlation: (Correlation & { yearsCovered?: [number, number] }) | null;
+  data?: IndexData | IndexData[] | null;
 }): string {
-  const { metaA, metaB, country, correlation } = args;
+  const { metaA, metaB, country, correlation, data } = args;
   // Use human-friendly names in the header. Codes are kept only in an
   // internal reference block (in case the model asks), but must not be
   // mentioned in the final explanation.
@@ -46,13 +47,14 @@ B = ${metaB.index_code}
   const instructions = `Write a short, professional explanation for a general audience.
 
 MANDATORY OUTPUT FORMAT:
-- The response MUST contain the following four headers (exact spelling and capitalization):
+- The response MUST contain the following five headers (exact spelling and capitalization):
   Summary
   Why it matters
   Drivers/Context
+  Real examples
   Caveats
 
-Each header must be followed by the content described below. Do not add any other top-level header. The headers become the primary structure of the answer; put the shortest possible summary under each.
+Each header must be followed by the content described below. Do not add any other top-level header (other than the five listed). The headers become the primary structure of the answer; put the shortest possible summary under each.
 
 Style and tone:
 - Use professional language and tone. Prefer technical terms over everyday words.
@@ -64,6 +66,7 @@ Structure (approx. 140–220 words total):
 - Summary (3-5 sentences): say whether the two indices (refer to them by their names, ${metaA.name} and ${metaB.name}) tend to move together and what that generally implies.
 - Why it matters (2-3 short bullets): practical or real-world implications in ${country}.
 - Drivers/Context (2-3 short bullets): plausible reasons these move together, grounded in the provided index descriptions. Quote ${correlation!.r} (Pearson's r) and briefly describe how it describes the correlation.
+- Real examples (1-2 short bullets): examine the provided IndexData and point to 1–2 specific years in ${country} where notable events plausibly align with the observed values and the correlation (${correlation ? correlation.r : 'n/a'}). Be concrete but concise, and keep claims consistent with the magnitude/direction suggested by the observations.
 - Caveats (1-2 short bullets): avoid causal claims; mention limits of the data if relevant; under no circumstances should missing definitions be acknowledged.
 
 Rules:
@@ -73,7 +76,18 @@ Rules:
 - If metadata is missing, do not acknowledge the gap; instead give cautious, general language grounded in plausible external sources.
 `;
 
-  const context = `Context:\n- ${rLine}\n- Years: ${yr}`;
+  // If present, include IndexData so the model can examine concrete observations.
+  const dataBlock = data
+    ? `\nIndexData for analysis (do not quote field names in the answer):\n${(() => {
+        try {
+    return JSON.stringify(data, null, 2);
+        } catch {
+          return String(data);
+        }
+      })()}`
+    : '';
+
+  const context = `Context:\n- ${rLine}\n- Years: ${yr}${dataBlock}`;
 
   // Place internalRef last so the model sees it but is instructed not to
   // mention it. The visible prompt contains only human-facing names and

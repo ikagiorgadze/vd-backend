@@ -16,12 +16,11 @@ function getDb(): duckdb.Database {
   return db;
 }
 
-export async function getCorrelation(params: {
-  indexA: string;
-  indexB: string;
-  country: string;
-}): Promise<(Correlation & { yearsCovered?: [number, number] }) | null> {
-  const { indexA, indexB, country } = params;
+export async function getCorrelation(
+  indexA: string,
+  indexB: string,
+  country: string
+): Promise<(Correlation & { yearsCovered?: [number, number] }) | null> {
   const stripDataset = (s: string) => {
     const raw = String(s ?? '').trim();
     const i = raw.indexOf(':');
