@@ -1,7 +1,7 @@
 import duckdb from 'duckdb';
 import path from 'path';
 import fs from 'fs/promises';
-import { Correlation } from '../types/explain';
+import { Correlation, CorrelationPair } from '../types/explain';
 
 const CORRELATIONS_DIR = process.env.CORRELATIONS_DIR
   ? path.resolve(process.cwd(), process.env.CORRELATIONS_DIR)
@@ -151,6 +151,135 @@ export async function getCorrelation(
     r: Number(best.r),
     n: best.n != null ? Number(best.n) : undefined,
     method: 'Pearson',
+    p_value: best.p_value != null ? Number(best.p_value) : undefined,
   };
   return result;
+}
+
+export async function getTopCorrelations(
+  country: string,
+  type: 'highest' | 'lowest' | 'strongest' | 'weakest' | 'most_significant' | 'least_significant' | 'most_observations' | 'fewest_observations',
+  dataset1: 'VDEM' | 'WEO' | 'NEA',
+  dataset2: 'VDEM' | 'WEO' | 'NEA',
+  minObservations?: number,
+  limit: number = 3
+): Promise<CorrelationPair[]> {
+  const countryTrim = country.trim();
+  const candNames = [
+    `country_name=${countryTrim}`,
+    `country_name-${countryTrim}`,
+  ];
+  let countryDir: string | null = null;
+  // First try exact path variants (fast path)
+  for (const n of candNames) {
+    const p = path.join(CORRELATIONS_DIR, n);
+    try {
+      const stat = await fs.stat(p);
+      if (stat && stat.isDirectory()) {
+        countryDir = p;
+        break;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // If not found, fall back to case-insensitive scan
+  if (!countryDir) {
+    try {
+      const entries = await fs.readdir(CORRELATIONS_DIR, { withFileTypes: true });
+      const lowerCand = candNames.map((x) => x.toLowerCase());
+      for (const ent of entries) {
+        if (!ent.isDirectory()) continue;
+        const nameLower = ent.name.toLowerCase();
+        const idx = lowerCand.indexOf(nameLower);
+        if (idx >= 0) {
+          countryDir = path.join(CORRELATIONS_DIR, ent.name);
+          break;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+  if (!countryDir) return [];
+
+  // Check for part files
+  let entries: string[];
+  try {
+    entries = await fs.readdir(countryDir);
+  } catch (e) {
+    return [];
+  }
+  const hasParts = entries.some(
+    (n) => n.startsWith('part-') && n.endsWith('.parquet')
+  );
+  if (!hasParts) return [];
+
+  const partGlob = path.join(countryDir, 'part-*.parquet');
+  const database = getDb();
+
+  const dataset1Prefix = `${dataset1}:`;
+  const dataset2Prefix = `${dataset2}:`;
+
+  let orderBy: string;
+  switch (type) {
+    case 'highest':
+      orderBy = 'r_pearson DESC';
+      break;
+    case 'lowest':
+      orderBy = 'r_pearson ASC';
+      break;
+    case 'strongest':
+      orderBy = 'ABS(r_pearson) DESC';
+      break;
+    case 'weakest':
+      orderBy = 'ABS(r_pearson) ASC';
+      break;
+    case 'most_significant':
+      orderBy = 'p_value ASC';
+      break;
+    case 'least_significant':
+      orderBy = 'p_value DESC';
+      break;
+    case 'most_observations':
+      orderBy = 'n_obs DESC';
+      break;
+    case 'fewest_observations':
+      orderBy = 'n_obs ASC';
+      break;
+    default:
+      orderBy = 'r_pearson DESC';
+  }
+
+  const minNClause = minObservations ? `AND n_obs >= ${minObservations}` : '';
+
+  const sql = `
+    SELECT 
+      index_a,
+      index_b,
+      r_pearson AS r,
+      n_obs AS n,
+      p_value
+    FROM read_parquet('${partGlob}')
+    WHERE (
+      (index_a LIKE '${dataset1Prefix}%' AND index_b LIKE '${dataset2Prefix}%') OR
+      (index_a LIKE '${dataset2Prefix}%' AND index_b LIKE '${dataset1Prefix}%')
+    )
+    ${minNClause}
+    ORDER BY ${orderBy}
+    LIMIT ${limit}
+  `;
+
+  const rows: any[] = await new Promise((resolve, reject) => {
+    database.all(sql, (err, res) => (err ? reject(err) : resolve(res)));
+  });
+
+  return rows.map(row => ({
+    indexA: row.index_a,
+    indexB: row.index_b,
+    r: Number(row.r),
+    n: Number(row.n),
+    p_value: Number(row.p_value),
+  }));
 }

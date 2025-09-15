@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { ExplainRequest } from '../types/explain';
+import { ExplainRequest, CorrelationsRequest, CorrelationsResponse } from '../types/explain';
 import { getIndexMetaUniversal } from '../services/metadata-universal.service';
-import { getCorrelation } from '../services/correlations.service';
+import { getCorrelation, getTopCorrelations } from '../services/correlations.service';
 import { buildExplainPrompt } from '../services/helpers/prompt';
 import { getOpenAIClient } from '../services/openai.service';
 import { TTLCache } from '../utils/ttlCache';
@@ -68,10 +68,12 @@ export const explainRelationshipsController = async (
         country,
         r: correlation.r,
         n: correlation.n,
+        p: correlation.p_value,
         m: correlation.method,
         years: (correlation as any).yearsCovered || [correlation.start_year, correlation.end_year],
         model,
         prompt,
+        version: 'v3', // Removed analogies, more serious tone
       });
 
       const cached = explainCache.get(key);
@@ -95,6 +97,45 @@ export const explainRelationshipsController = async (
       context: { indexA: safeMetaA, indexB: safeMetaB, country, correlation },
       model,
     });
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json({ error: 'internal error', details: String(err?.message || err) });
+  }
+};
+
+export const getCorrelationsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const query = req.query as unknown as CorrelationsRequest;
+
+    const { country, type, dataset1, dataset2, minObservations, limit } = query;
+
+    if (!country || !type || !dataset1 || !dataset2) {
+      return res.status(400).json({ error: 'Missing required parameters: country, type, dataset1, dataset2' });
+    }
+
+    if (!['highest', 'lowest', 'strongest', 'weakest', 'most_significant', 'least_significant', 'most_observations', 'fewest_observations'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be one of: highest, lowest, strongest, weakest, most_significant, least_significant, most_observations, fewest_observations' });
+    }
+
+    const validDatasets = ['VDEM', 'WEO', 'NEA'];
+    if (!validDatasets.includes(dataset1) || !validDatasets.includes(dataset2)) {
+      return res.status(400).json({ error: 'Dataset1 and dataset2 must be "VDEM", "WEO", or "NEA"' });
+    }
+
+    const minObs = minObservations ? parseInt(String(minObservations), 10) : undefined;
+    const lim = limit ? parseInt(String(limit), 10) : 3;
+
+    const correlations = await getTopCorrelations(country, type, dataset1, dataset2, minObs, lim);
+
+    const response: CorrelationsResponse = {
+      correlations,
+    };
+
+    return res.json(response);
   } catch (err: any) {
     return res
       .status(500)

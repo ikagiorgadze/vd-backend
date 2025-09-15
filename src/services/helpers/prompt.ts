@@ -18,6 +18,7 @@ export function buildExplainPrompt(args: {
         correlation.method ? ` (${correlation.method})` : ''
       }` +
       `${correlation.n != null ? `, n=${correlation.n}` : ''}` +
+      `${correlation.p_value != null ? `, p=${correlation.p_value}` : ''}` +
       `${
         correlation.yearsCovered
           ? `, years=${correlation.yearsCovered[0]}–${correlation.yearsCovered[1]}`
@@ -47,31 +48,33 @@ B = ${metaB.index_code}
   const instructions = `Write a short, professional explanation for a general audience.
 
 MANDATORY OUTPUT FORMAT:
-- The response MUST contain the following five headers (exact spelling and capitalization):
-  Summary
-  Why it matters
-  Drivers/Context
-  Real examples
-  Caveats
+- The response MUST contain the following six headers (exact spelling and capitalization):
+\`\`\`
+Summary
+Why it matters
+Statistical reliability
+Drivers/Context
+Real examples
+Caveats
 
-Each header must be followed by the content described below. Do not add any other top-level header (other than the five listed). The headers become the primary structure of the answer; put the shortest possible summary under each.
-
-Style and tone:
+Each header must be followed by the content described below. Do not add any other top-level header (other than the six listed). The headers become the primary structure of the answer; put the shortest possible summary under each.Style and tone:
 - Use professional language and tone. Prefer technical terms over everyday words.
 - Refer to the indices only by their human-friendly names (not codes).
 - Never mention internal identifiers, code strings, file names, or dataset labels (for example "v2x_polyarchy", "v2lgstafflo", or "NGDP.RPCH").
-- Keep it focused on what this means in ${country} rather than on statistical details.
+- Maintain serious, academic tone throughout the response.
 
-Structure (approx. 140–220 words total):
+Structure (approx. 160–240 words total):
 - Summary (3-5 sentences): say whether the two indices (refer to them by their names, ${metaA.name} and ${metaB.name}) tend to move together and what that generally implies.
 - Why it matters (2-3 short bullets): practical or real-world implications in ${country}.
-- Drivers/Context (2-3 short bullets): plausible reasons these move together, grounded in the provided index descriptions. Quote ${correlation!.r} (Pearson's r) and briefly describe how it describes the correlation.
+- Drivers/Context (2-3 short bullets): plausible reasons these move together, grounded in the provided index descriptions. Reference the correlation strength without quoting the raw numbers again.
 - Real examples (1-2 short bullets): examine the provided IndexData and point to 1–2 specific years in ${country} where notable events plausibly align with the observed values and the correlation (${correlation ? correlation.r : 'n/a'}). Be concrete but concise, and keep claims consistent with the magnitude/direction suggested by the observations.
-- Caveats (1-2 short bullets): avoid causal claims; mention limits of the data if relevant; under no circumstances should missing definitions be acknowledged.
+- Statistical reliability (2-3 short bullets): explain what the correlation statistics mean. Describe the strength of the relationship (r = ${correlation!.r}), the statistical significance (p-value = ${correlation!.p_value != null ? correlation!.p_value : 'not available'}), and the sample size reliability (n = ${correlation!.n}). Use clear, professional language without analogies.
+- Caveats (1-2 short bullets): avoid causal claims; mention limits of the data if relevant; reinforce reliability assessment from the statistical section.
 
 Rules:
 - Do not include index codes or internal identifiers anywhere in the explanation.
-- Do not list formulas or parenthetical statistics beyond the single quoted Pearson r in Drivers/Context.
+- Use precise, professional language for statistical explanations without oversimplification or analogies.
+- In the Statistical reliability section, focus on factual interpretation of the correlation metrics.
 - If metadata is present, do not fabricate facts beyond the provided context.
 - If metadata is missing, do not acknowledge the gap; instead give cautious, general language grounded in plausible external sources.
 `;
