@@ -26,12 +26,12 @@ app.use(cors(corsOptions));
 // Middleware: parse JSON request bodies
 app.use(express.json());
 
-// Health lives at root, domain-specific APIs under /v-dem and /imf
-app.use('/v-dem', vdemRouter);
-app.use('/imf', imfRouter);
-app.use('/analysis', analysisRouter);
+// Domain-specific APIs under /api
+app.use('/api/v-dem', vdemRouter);
+app.use('/api/imf', imfRouter);
+app.use('/api/analysis', analysisRouter);
 
-// Root health (mirrors /v-dem/health & /imf/health if needed later)
-app.get('/health', (_req, res) => res.json({ ok: true }));
+// Health endpoint
+app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
 export default app;
