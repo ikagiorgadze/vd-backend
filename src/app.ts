@@ -27,11 +27,11 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Domain-specific APIs under /api
-app.use('/api/v-dem', vdemRouter);
-app.use('/api/imf', imfRouter);
-app.use('/api/analysis', analysisRouter);
+app.use('/v-dem', vdemRouter);
+app.use('/imf', imfRouter);
+app.use('/analysis', analysisRouter);
 
 // Health endpoint
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req, res) => res.json({ ok: true }));
 
 export default app;
